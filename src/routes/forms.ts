@@ -3,6 +3,18 @@ import type { UiResponse } from '@devvit/web/shared';
 import { context } from '@devvit/web/server';
 import { isT1, isT3 } from '@devvit/shared-types/tid.js';
 import { handleNuke, handleNukePost } from '../core/nuke';
+import { upsertContent } from '../data/store';
+import type { Label } from '../data/types';
+
+export const forms = new Hono();
+
+const VALID_LABELS = new Set<Label>(['clean', 'toxicity', 'out_of_topics']);
+
+type LabelFormValues = {
+  targetId?: string;
+  label?: string[];
+  violation_rule?: string;
+};
 
 type NukeFormValues = {
   remove?: boolean;
@@ -10,8 +22,6 @@ type NukeFormValues = {
   skipDistinguished?: boolean;
   targetId?: string;
 };
-
-export const forms = new Hono();
 
 const normalizeValues = (values: NukeFormValues) => ({
   remove: Boolean(values.remove),
@@ -26,6 +36,32 @@ const getTargetId = (values: NukeFormValues) => {
 
   return context.postId;
 };
+
+forms.post('/label-content-submit', async (c) => {
+  const values = await c.req.json<LabelFormValues>();
+  const targetId = values.targetId?.trim() || context.commentId || context.postId;
+  const label = values.label?.[0] as Label | undefined;
+
+  if (!targetId) {
+    return c.json<UiResponse>({ showToast: 'Could not determine target content.' }, 200);
+  }
+
+  if (!label || !VALID_LABELS.has(label)) {
+    return c.json<UiResponse>({ showToast: 'Please select a valid label.' }, 200);
+  }
+
+  try {
+    await upsertContent(targetId, {
+      label,
+      violation_rule: values.violation_rule?.trim() || null,
+    });
+  } catch (error: unknown) {
+    console.error('Label update failed', error);
+    return c.json<UiResponse>({ showToast: 'Failed to update label. Please try again.' }, 200);
+  }
+
+  return c.json<UiResponse>({ showToast: `Label set to "${label}".` }, 200);
+});
 
 forms.post('/mop-comment-submit', async (c) => {
   const values = await c.req.json<NukeFormValues>();

@@ -20,15 +20,33 @@
         "location": "post",
         "forUserType": "moderator",
         "endpoint": "/internal/menu/mop-post"
+      },
+      {
+        "label": "Label content",
+        "description": "Set a moderation label on this post.",
+        "location": "post",
+        "forUserType": "moderator",
+        "endpoint": "/internal/menu/label-content"
+      },
+      {
+        "label": "Label content",
+        "description": "Set a moderation label on this comment.",
+        "location": "comment",
+        "forUserType": "moderator",
+        "endpoint": "/internal/menu/label-content"
       }
     ]
   },
   "forms": {
     "mopComment": "/internal/form/mop-comment-submit",
-    "mopPost": "/internal/form/mop-post-submit"
+    "mopPost": "/internal/form/mop-post-submit",
+    "labelContent": "/internal/form/label-content-submit"
   },
   "triggers": {
-    "onAppInstall": "/internal/triggers/on-app-install"
+    "onAppInstall": "/internal/triggers/on-app-install",
+    "onPostSubmit": "/internal/triggers/on-post-submit",
+    "onCommentSubmit": "/internal/triggers/on-comment-submit",
+    "onModAction": "/internal/triggers/on-mod-action"
   },
   "scripts": {
     "build": "vite build",
